@@ -1,0 +1,9 @@
+All should be run from small RNA project directory:
+ex: cd /proj/seth_lab/smallRNA/29fam43to54JB
+perl ../scripts/normRPMM.pl mmu */IntermediateFiles/g1Results/TAB_3p* > out.txt
+
+countNTA.pl - counts NTAs in each sample
+genNormalRPM.pl - Generate normalized RPMM counts for each project
+normRPMM.pl - same as above, smaller sample names and option to add NTA types
+process_all_summary2tab.pl - run all summary2tab runs on a set of samples... Needs full path
+generateTSadaptorFiles.pl - generates TS adaptor files for chain submission... Needs full path
