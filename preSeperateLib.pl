@@ -9,9 +9,11 @@
 #
 ###############################################################################
 
-my $short = shift;
-my $long = shift;
-my $lib_file = shift;
+print "\nRunning preSeperateLib.pl\n\n";
+
+my $short = shift;      # minRNA length
+my $long = shift;       # maxRNA length
+my $lib_file = shift;   # trimmed reads file
 
 # $long = 28 if ($long > 28);
 
@@ -25,7 +27,7 @@ for (my $a = $short; $a<=$long; $a++) {                    # for #'s between min
    open(FILE, ">${lib_file}_$a.fq") or die "foobar ";      # opens a file for reads of some length
    push(@files,*FILE);                                     # adds length file to file list
 }
-   open(NP, ">${lib_file}_notProc.fq") or die;             # opens a not processed file
+open(NP, ">${lib_file}_notProc.fq") or die;             # opens a not processed file
 
 print "@files\n";                                          # prints list of files
 print "$NP\n";                                             # print not processed file

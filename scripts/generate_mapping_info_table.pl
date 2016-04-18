@@ -43,7 +43,7 @@ foreach $a (@ARGV) {
    `echo "tRNAMapped: $tRNAcount" >> $Name.stats`;
 }
 }
-$outFile=join('/',$startDir,'MappingInfoTable.txt');
+$outFile=join('/',$startDir,'MappingInfoTable.tsv');
 open(OUT,">$outFile");
 foreach $a(@ARGV) {
    $dir =`dirname $a`;
@@ -151,7 +151,7 @@ print OUT "\n";
 
 #print Total Mapped
 $k='Mapped';
-print OUT "Toatl mapped reads";
+print OUT "Total mapped reads";
 foreach $N(keys(%Table)){
     print OUT "\t$Table{$N}{$k}";
 } 

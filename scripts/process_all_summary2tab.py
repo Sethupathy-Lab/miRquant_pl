@@ -50,7 +50,7 @@ def run_summary2Tab_clust():
         topDir='/'.join(dirParts)
         Name = dirParts.pop()[:-1]
         os.chdir(topDir)
-        os.system('tar -zcvf {}.tgz IntermediateFiles'.format(Name))
+        os.system('bsub -J zipping_file tar -zcvf {}.tgz IntermediateFiles'.format(Name))
         os.system('echo "Mapped: {}" >> {}.stats'.format(count, Name))
         os.system('echo "miRMapped: {}" >> {}.stats'.format(miRcount, Name))
         

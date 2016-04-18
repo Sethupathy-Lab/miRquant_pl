@@ -15,6 +15,8 @@ $GSLib=shift;                                              # assign GRO-seq vari
 $windowFile=shift;                                         # NAME_allGS.bed"
 $baseDirName=`dirname $windowFile`;                        # set directory of .bed file
 $GENOME=shift;                                             # set species to variable
+
+
 if ($GENOME eq 'hsa') {                                    # Get necessary table based on genome
    open (MIR, "$progdirname/resources/hsa_table.txt");
 }
@@ -27,6 +29,8 @@ elsif ($GENOME eq 'cast') {
 else {
    open (MIR, "$progdirname/resources/rno_table.txt");
 }
+
+
 %mirList=();
 %mirStrand=();
 while($mir=<MIR>) {                                                  # loop through miRs in table
@@ -113,7 +117,9 @@ foreach $dirL(@ARGV) {                                               # loop thro
 	    }
 	 }
       }
-      #  REMOVE all hits with score less than maxscore. Favor Better matches.
+
+      
+####  REMOVE all hits with score less than maxscore. Favor Better matches.  ####
       my @tmpArr1 = keys(%{$maps{$k}});                    # make temporary arrage of maps keys
       foreach $i (keys(%{$maps{$k}})) {                    # loop through maps[key]
 	 my($chr,$loc,$str) = split(/[:\(\)]/,$i);         # get chromosome, location, string info
@@ -204,6 +210,9 @@ foreach $dirL(@ARGV) {                                               # loop thro
       $dirName = $dname . "/" . $chr;                                # set directory name by chromosome
       `mkdir -p $dirName`;                                           # make chromo folder (& g1Results if not made)
       $fname = $dirName . "/" . $k . ".results";                     # set output file name
+      $fname2 = $dirName . "/" . $dirL . $k . ".results";                     # set output file name
+      print $fname   $fname2;                     # set output file name
+      exit;
       if( length(keys(%{$hits{$k}}))>0){                             # if length of value in hits[key] > 0
 	 open (OUT, ">>$fname") or die "cant open $fname";           # open output file name
 	 unless (flock(OUT, LOCK_EX | LOCK_NB)) {                    # file lock, do not understand

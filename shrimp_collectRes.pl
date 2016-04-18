@@ -334,7 +334,9 @@ foreach $res (keys(%btWins)) { #@files
    %visited = ();
 #%countE = ();
    $discardCount=0;
+
    foreach $kkey (@keys) {
+
       if ($tRNAi{$kkey} eq 'NA') {
 	 $key = $kkey;
       }
@@ -342,6 +344,7 @@ foreach $res (keys(%btWins)) { #@files
 	 ($key,$endKey,$kstr) =split(":",$kkey);
 #print "JTB: $tRNAi{$kkey}\t$mirLens{$kkey}\n";
       }
+
       $TCount += $counts{$kkey};
       if (!exists($visited{$kkey})) {
 	 $visited{$kkey} = 1;
@@ -352,7 +355,9 @@ foreach $res (keys(%btWins)) { #@files
 	 $minDistanceS = "NA";
 	 $mNameMir="$CHR:$key_loc:$STR";
 	 $mNameMir=$tRNAi{$kkey} unless ($tRNAi{$kkey} eq 'NA');
-	 foreach $p (keys (%{$mirList{$CHR}})) {    
+
+
+         foreach $p (keys (%{$mirList{$CHR}})) {    
 	    if ($STR eq "P") {
 	       $winStr = "+";
 	       $dS = $key_loc - $p;
@@ -382,6 +387,7 @@ foreach $res (keys(%btWins)) { #@files
 	       }
 	    }
 	 }
+
 
 	 $offset = $minDistanceS;
 	 if (scalar(keys(%{$mirList{$CHR}}))==0) {
@@ -530,16 +536,27 @@ foreach $res (keys(%btWins)) { #@files
 #print "$res\n";
 #PRINT outputs to summary files
 
+
+   ###  FROM HERE DOWN IS WRITING OUTPUTS FROM DICTS FOR OUTPUTS
    $TdiscardCount += $discardCount;
+   if (! -d $outDir . "/5p_summary") {
+       system("mkdir $outDir/5p_summary")
+   }
+   if (! -d $outDir . "/3p_summary") {
+       system("mkdir $outDir/3p_summary")
+   }
+   if (! -d $outDir . "/ed_summary") {
+       system("mkdir $outDir/ed_summary")
+   }
+   if (! -d $outDir . "/shift_summary") {
+       system("mkdir $outDir/shift_summary")
+   }
+   if (! -d $outDir . "/lenDist_summary") {
+       system("mkdir $outDir/lenDist_summary")
+   }
    if(1) {
-      $fname=$outDir . "/5p_summary.txt";
-      open (P5,">>$fname");
-      unless (flock(P5, LOCK_EX | LOCK_NB)) { 
-	 $| = 1;
-	 print "Waiting for lock ...";
-	 flock(P5,LOCK_EX) or die "cant lock file $!";
-	 print "got it\n";
-      }
+      $fname=$outDir . "/5p_summary/${res}_5p_summary.txt";
+      open (P5,">$fname");
       seek (P5, 0, SEEK_END);
       foreach $key (keys (%p5)){
 	 print P5 "$key\tCount:$SUMMARY{$key}\tEM:$ExMat{$key}";
@@ -550,14 +567,8 @@ foreach $res (keys(%btWins)) { #@files
 	 print P5 "\n";
       }
       close (P5);
-      $fname=$outDir . "/3p_summary.txt";
-      open (P3,">>$fname");
-      unless (flock(P3, LOCK_EX | LOCK_NB)) { 
-	 $| = 1;
-	 print "Waiting for lock ...";
-	 flock(P3,LOCK_EX) or die "cant lock file $!";
-	 print "got it\n";
-      }
+      $fname=$outDir . "/3p_summary/${res}_3p_summary.txt";
+      open (P3,">$fname");
       seek (P3, 0, SEEK_END);
       foreach $key (keys (%p3)){
 	 print P3 "$key\tCount:$SUMMARY{$key}\tEM:$ExMat{$key}";
@@ -568,14 +579,8 @@ foreach $res (keys(%btWins)) { #@files
 	 print P3 "\n";
       }
       close (P3);
-      $fname=$outDir . "/ed_summary.txt";
-      open (ED,">>$fname");
-      unless (flock(ED, LOCK_EX | LOCK_NB)) { 
-	 $| = 1;
-	 print "Waiting for lock ...";
-	 flock(ED,LOCK_EX) or die "cant lock file $!";
-	 print "got it\n";
-      }
+      $fname=$outDir . "/ed_summary/${res}_ed_summary.txt";
+      open (ED,">$fname");
       seek (ED, 0, SEEK_END);
       foreach $key (keys (%E)){
 	 print ED "$key\tCount:$SUMMARY{$key}\tEM:$ExMat{$key}";
@@ -586,14 +591,8 @@ foreach $res (keys(%btWins)) { #@files
 	 print ED "\n";
       }
       close (ED);
-      $fname=$outDir . "/shift_summary.txt";
-      open (SH,">>$fname");
-      unless (flock(SH, LOCK_EX | LOCK_NB)) { 
-	 $| = 1;
-	 print "Waiting for lock ...";
-	 flock(SH,LOCK_EX) or die "cant lock file $!";
-	 print "got it\n";
-      }
+      $fname=$outDir . "/shift_summary/${res}_shift_summary.txt";
+      open (SH,">$fname");
       seek (SH, 0, SEEK_END);
       foreach $key (keys (%Shift)){
 	 print SH "$key\tCount:$SUMMARY{$key}\tEM:$ExMat{$key}";
@@ -604,14 +603,8 @@ foreach $res (keys(%btWins)) { #@files
 	 print SH "\n";
       }
       close (SH);
-   $fname=$outDir . "/lenDist_summary.txt";
-   open (LD,">>$fname");
-   unless (flock(LD, LOCK_EX | LOCK_NB)) { 
-      $| = 1;
-      print "Waiting for lock ...";
-      flock(LD,LOCK_EX) or die "cant lock file $!";
-      print "got it\n";
-   }
+   $fname=$outDir . "/lenDist_summary/${res}_lenDist_summary.txt";
+   open (LD,">$fname");
    seek (LD, 0, SEEK_END);
    foreach $key (keys (%LenDist)){
       print LD "$key\tCount:$SUMMARY{$key}\tEM:$ExMat{$key}";
@@ -624,16 +617,12 @@ foreach $res (keys(%btWins)) { #@files
    close (LD);
    }
 }
+
 print "iJTB #<=10_Discards:\t$discardCount\t$TdiscardCount\t$TCount\t$CCount\n";
 `rm $tfile`;
-$fname=$outDir . "/Shrimp_results.bed";
+$fname="$ARGV[0]_Shrimp_results.bed";
+print $fname
 open (OUTBED,">>$fname");
-unless (flock(OUTBED, LOCK_EX | LOCK_NB)) { 
-   $| = 1;
-   print "Waiting for lock ...";
-   flock(OUTBED,LOCK_EX) or die "cant lock file $!";
-   print "got it\n";
-}
 seek (OUTBED, 0, SEEK_END);
 print OUTBED "@bedFile";
 close(OUTBED);
