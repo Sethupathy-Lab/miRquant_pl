@@ -3,4 +3,5 @@ resources/*.txt
 resources/dro
 resources/*.fa
 scripts/old_scripts
+scripts/dev
 rn5

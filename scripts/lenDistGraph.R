@@ -8,6 +8,17 @@ args <- commandArgs(TRUE)
 # Load Data
 lenData <- read.csv(args[1], header = T, sep = "\t")
 
+# Change names to first 10 characters
+new_names = c()
+for (name in names(lenData)) {
+  if (nchar(name) > 10) {
+    new_names <- append(new_names, substr(name, 2, 11))
+  } else {
+    new_names <- append(new_names, name)
+  }
+}
+names(lenData) <- new_names
+
 # Convert data for ggplot input
 bit <- melt(lenData, id.vars = "X")
 
@@ -15,7 +26,7 @@ bit <- melt(lenData, id.vars = "X")
 wrap = round(length(lenData) * .33)
 
 # Write output to lenDistHistogram.png
-png("lenDistHistogram.png")
+png("lenDistHistogram.png", width = wrap + wrap * .2, height = wrap, units = "in", res = 150)
 ggplot(bit, aes(x = X, y = value, fill = variable)) +
   geom_bar(stat="identity") +
   facet_wrap(~variable, ncol = wrap) +

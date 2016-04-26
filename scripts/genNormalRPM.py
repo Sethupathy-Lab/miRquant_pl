@@ -24,7 +24,7 @@ def check_species_input():
     '''This checks that a the species input makes sense.  If species input
     known to be correct, but not in list below, add species abbreviation'''
     if sys.argv[1] in ['mmu', 'hsa', 'rno', 'cast']:
-        sys.stdout = open('RPMM_all.tsv', 'w')
+        sys.stdout = open('RPM_all.tsv', 'w')
         return sys.argv[1]
     else:
         print '\nSpecies not recognized, known species: mmu, hsa, rno, cast'
@@ -85,7 +85,7 @@ def write_miRs_only_RPMM(sample_miRs):
     called RPMM_miRs_only.tsv'''
     all_miRs = set([miR for key in sample_miRs for miR in sample_miRs[key]])
     sample_list = sample_miRs.keys()
-    with open('RPMM_miRs_only.tsv', 'w') as f:
+    with open('RPM_miRs_only.tsv', 'w') as f:
         f.write('\t{}\n'.format('\t'.join(sample_list)))
         for miR in all_miRs:
             f.write(miR)
@@ -101,7 +101,7 @@ def write_miRs_over_100(sample_miRs, miRs_over_thresh, thresh):
     '''Writes miRs where RPMM is greater than threshold for at least one sample
     to an output file (called RPMM_miRs_over_(threshold).tsv'''
     sample_list = sample_miRs.keys()
-    with open('RPMM_miRs_over_{}.tsv'.format(str(thresh)), 'w') as f:
+    with open('RPM_miRs_over_{}.tsv'.format(str(thresh)), 'w') as f:
         f.write('\t{}\n'.format('\t'.join(sample_list)))
         for miR in miRs_over_thresh:
             f.write(miR)

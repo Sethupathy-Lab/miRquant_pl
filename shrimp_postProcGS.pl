@@ -36,9 +36,9 @@ else {
 while($mir=<MIR>) {                                                  # loop through miRs in table
    chomp($mir);                                            
    my ($mName,$mchr,$mSt,$mEd,$mStr,$mSeq,$mHp) = split(/\t/,$mir);  # split line into variables
-   $ind = index($mHp, $mSeq);                                        # returns index of mSeq in mHp
+   $ind = index($mHp, $mSeq);                                        # returns index of mature miR seq in miR hairpin
 
-   $loc = $mSt + $ind;                                               # set start to actual location of seed
+   $loc = $mSt + $ind;                                               # set start to start of mature miR seq
    $loc = $mEd - $ind -length($mSeq) +1 if ($mStr eq "-");           # same as above, but for minus string
    $mchr = uc($mchr);                                                # makes chromosome name uppercase
    $mirList{$mchr}{$loc} = $mName;                                   # puts miR name in chromosome location dict
@@ -53,22 +53,22 @@ chomp($baseDirName);
 foreach $dirL(@ARGV) {                                               # loop through directories in agruments 
 
    my ($base,$readSize) =split (/_/,$dirL);                          # base = 'readSize', readSize = actual length
-   my $dir = $baseDirName . "/" . $dirL;                             # set directory name
+   my $dir = $baseDirName . "/" . $dirL;                             # set directory name to read_size folder containing shrimp results 
    opendir(my $dh, $dir) || die "can't opendir $dir : $!";           # get file list from directory
-   @files = grep { /\.out/ && -f "$dir/$_" } readdir($dh);
+   @files = grep { /\.out/ && -f "$dir/$_" } readdir($dh);           # get the shrimp output files
    closedir $dh;
 
    %hits=();
    %maps=();
    %tags=();
    $perMatch=(); # Keep track of perfect Matches (to throw away). These are matches to too many loci from bowtie.
-   foreach $res (@files) {                                           # for each file in directroy (from above)
+   foreach $res (@files) {                                           # for each shrimp output file 
       open(RES,"$dir/$res") or die "cant open $res";
       $dummy=<RES>;                                                  # header line
 	 while($line = <RES>) {                                      # for line in file
 	    chomp($line);   
 	    my ($readTag,$window,$strand,$cstart,$cend,$rstart,$rend,$rlen,$score,$estr) = split(/\t/,$line);
-	    @misMatches = split( /\d+/,$estr);                       # split estr at digit?
+	    @misMatches = split( /\d+/,$estr);                       # split edit string at digit?
 	    if (!exists($maps{$readTag}{$window})) {                 # if window not in dictionary
 	       $maps{$readTag}{$window} = $score;                    # set these to values
 	       $hits{$window}{$readTag} = $line;
@@ -142,11 +142,11 @@ foreach $dirL(@ARGV) {                                               # loop thro
 	    $tmp =~ s/\(R-\)/:RM/g;                               # JTB
 	    my($chr,$posA,$posB,$str) = split(/[:-]/,$tmp);       # set chromosome, positions, and orientation
 	    my ($rT,$win,$str2,$cst2,$cend2,$rstart2,$rend2,$rlen2,$score2,$estr2) = split(/\t/,$hits{$i}{$k});
-	    if (($str eq "P")||($str eq "RP")) {                  # JTB or RP??
+	    if (($str eq "P")||($str eq "RP")) {                  # if strandedness = positive or RNA positive 
 	       $str = "+";                                        # plus string
-	       $t1 = $posA;                                       # 
-	       $posA = $t1 + $cst2;
-	       $posB = $t1 + $cend2;
+	       $t1 = $posA;                                       # t1 = window start
+	       $posA = $t1 + $cst2;                               # bowtie window start + shrimp contig start
+	       $posB = $t1 + $cend2;                              # bowtie window start + shrimp contig end
 	    }
 	    else
 	    {
@@ -155,9 +155,9 @@ foreach $dirL(@ARGV) {                                               # loop thro
 	       $posA = $t1 - $cend2;
 	       $posB = $t1 - $cst2;
 	    }
-	    $chr =~ s/CHR/chr/g;
-	    $bedline = join("\t",$chr,$posA,$posB,$i,1,$str);
-	    push(@WindArr,$bedline);
+	    $chr =~ s/CHR/chr/g;                                  # change capital CHR to lowercase chr
+	    $bedline = join("\t",$chr,$posA,$posB,$i,1,$str);     # set bedline to new coordinates
+	    push(@WindArr,$bedline);                              # add to windows array
 	 }
       }
 @out = keys(%{$maps{$k}});
@@ -211,8 +211,6 @@ foreach $dirL(@ARGV) {                                               # loop thro
       `mkdir -p $dirName`;                                           # make chromo folder (& g1Results if not made)
       $fname = $dirName . "/" . $k . ".results";                     # set output file name
       $fname2 = $dirName . "/" . $dirL . $k . ".results";                     # set output file name
-      print $fname   $fname2;                     # set output file name
-      exit;
       if( length(keys(%{$hits{$k}}))>0){                             # if length of value in hits[key] > 0
 	 open (OUT, ">>$fname") or die "cant open $fname";           # open output file name
 	 unless (flock(OUT, LOCK_EX | LOCK_NB)) {                    # file lock, do not understand
