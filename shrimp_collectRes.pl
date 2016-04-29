@@ -2,28 +2,30 @@
 use Fcntl qw(:flock SEEK_END);
 use List::Util qw[min max];
 
-$dir = $ARGV[0];
-$bt = $ARGV[0] . ".results";
-$GENOME = $ARGV[1];
-$outDir=`dirname $bt`;
-chomp($outDir);
-$TdiscardCount=0;
+$dir = $ARGV[0];                                                           # Directory of results
+$bt = $ARGV[0] . ".results";                                               # CHR#.results file
+$GENOME = $ARGV[1];                                                        # Species
+$outDir=`dirname $bt`;                                                     # Directory for outputs
+chomp($outDir);                                                            # Remove new line
+$TdiscardCount=0;                                                            
 $TCount=0;
 $CCount=0;
-$libDir= $dir . "/../../";
+$libDir= $dir . "/../../";                                                 # Directory containing SAMPLE.stats file
 opendir(my $dh, $dir) || die "can't opendir $dir : $!";
-#get list of window result files
-@files = grep { /\.results/ && -f "$dir/$_" } readdir($dh);
+
+# Get list of window result files
+@files = grep { /\.results/ && -f "$dir/$_" } readdir($dh);                # Get list of SHRiMP results files
 %btWins =();
 closedir $dh;
 #print "$libDir\n";
 opendir(my $dh2, $libDir) || die "can't opendir $libDir : $!";
-@filesLib = grep { /LIB.fa/ && -f "$libDir/$_" } readdir($dh2);
+@filesLib = grep { /LIB.fa/ && -f "$libDir/$_" } readdir($dh2);            # Get windows fasta file
 #print "@filesLib\n";
 closedir $dh2;
 %EM =();
 my @bedFile;
-#open BT results for this CHR
+
+# Open bowtie results for this CHR
 open (BT,$bt);
 while ($line = <BT>) {
    chomp($line);
@@ -39,7 +41,8 @@ foreach $f (@files) {
    $btWins{$f} = 1;
 }
 close(BT);
-#Load mmu_mir annotations for mir locations
+
+# Load mmu_mir annotations for mir locations
 if ($GENOME eq 'hsa') {
    open (MIR, "resources/hsa_table.txt");
    $TRNAfile="resources/hg19_tRNA12.bed";
@@ -56,6 +59,7 @@ else {
    open (MIR, "resources/rno_table.txt");
    $TRNAfile="resources/rn4_tRNA12.bed";
 }
+
 %mirList=();                                                                             
 %mirStrand=();                                                                             
 %mirLoc=();
@@ -65,15 +69,13 @@ while($mir=<MIR>) {
    chomp($mir);
    my ($mName,$mchr,$mSt,$mEd,$mStr,$mSeq,$mHp) = split(/\t/,$mir);
    $ind = index($mHp, $mSeq);
-   $loc = $mSt + $ind -1;  # MMU Table indexes =+1 of bowtie/shrimp
+   $loc = $mSt + $ind -1;                                              # MMU Table indexes =+1 of bowtie/shrimp
    $loc = $mEd - $ind -1 if ($mStr eq "-");
-   $mchr = uc($mchr);
-#store mir by location and chr for later searching
-   $mirList{$mchr}{$loc} = $mName;
-#store strand 
-   $mirStrand{$mchr}{$loc} = $mStr;
-   $mirLoc{$mName} = "$mchr:$loc:$mStr";
-   $mirClass{$mName} = 0;
+   $mchr = uc($mchr);                                                  # Make CHR uppercase
+   $mirList{$mchr}{$loc} = $mName;                                     # Store mir by location and chr for later searching
+   $mirStrand{$mchr}{$loc} = $mStr;                                    # Store mir strand information
+   $mirLoc{$mName} = "$mchr:$loc:$mStr";                               # Contains all location information for miR
+   $mirClass{$mName} = 0;                                             
 # $mirLen{$mName} = length($mSeq);
 }
 
@@ -96,26 +98,26 @@ close(MIR);
 #close (TRNA);
 
 
-#for each window file: process all hits in window
+# For each window file, process all hits in window
 $tfile=`mktemp`;
 chomp($tfile);
 print "$tfile \n";
-foreach $res (keys(%btWins)) { #@files
-   %maps=(); #store edits
-   %ExMat =(); #count of exact maps
-   %mirs=();  #Name of mir/ potential mir
-   %tRNAi = (); #Name of ovlaping tRNA
-   %counts = ();  #counts
-   %mirLens = (); # readlenghts
+foreach $res (keys(%btWins)) {                                         # bowtie results files
+   %maps=();                                                           # store edits
+   %ExMat =();                                                         # count of exact maps
+   %mirs=();                                                           # Name of mir/ potential mir
+   %tRNAi = ();                                                        # Name of ovlaping tRNA
+   %counts = ();                                                       # counts
+   %mirLens = ();                                                      # readlenghts
    %countList = ();
-   %eCounts=(); #store edits
+   %eCounts=();                                                        # store edits
    my $tmp = $res;
-#replace +- with PM for splitting
+# Replace +- with PM for splitting
    $tmp =~ s/\(\+\)/:P:/g;
    $tmp =~ s/\(-\)/:M:/g;
    $tmp =~ s/\(R-\)/:RM:/g;
    $tmp =~ s/\(R\+\)/:RP:/g;
-#split parts of name
+# Split parts of name
    my ($CHR, $START, $STOP, $STR,$EXT) = split(/[:-]/,$tmp);
    if ($STR eq "P") {
       $sSTR="+";
@@ -134,14 +136,13 @@ foreach $res (keys(%btWins)) { #@files
 #print "$tmp\t$filename\n";
    if (-e $filename) {
       %tRNAlu=();
-      open(RES,"$filename") or die "cant open $filename";
-#process each read in window
+      open(RES,"$filename") or die "cant open $filename";              # SHRiMP results file
+# Process each read in window
       while($line = <RES>) {
 	 chomp($line);
-	 my ($readTag,$window,$strand,$cstart,$cend,$rstart,$rend,$rlen,$score,$estr,$mir,$pcount) = split(/\t/,$line);
-
-	 my $readkey=join("\t",$window,$strand,$cstart,$cend,$rstart,$rend,$rlen,$score,$estr,$mir);
-	 $eCounts{$readkey} = 0 if (!exists($eCounts{$readkey}));
+	 my ($readTag,$window,$strand,$cstart,$cend,$rstart,$rend,$rlen,$score,$estr,$mir,$pcount) = split(/\t/,$line);  # Split SHRiMP result line
+	 my $readkey=join("\t",$window,$strand,$cstart,$cend,$rstart,$rend,$rlen,$score,$estr,$mir);                     # Makes dict key
+	 $eCounts{$readkey} = 0 if (!exists($eCounts{$readkey}));      # Puts these in dictionary, which is iterated through below
 	 $eCounts{$readkey} +=$pcount;
       }
       close(RES);
@@ -149,7 +150,7 @@ foreach $res (keys(%btWins)) { #@files
 	 my ($window,$strand,$cstart,$cend,$rstart,$rend,$rlen,$score,$estr,$mir) = split(/\t/,$read);
 	 $pcount=$eCounts{$read};
 #print "$read\t$pcount\n";
-#get the genomic coord for out to bed file
+# Get the genomic coord for out to bed file
 	 if (($STR eq "M")||($STR eq "RM")) {
 	    $genSTART = $STOP - $cend;
 	    $genEND = $STOP - $cstart +1;
@@ -159,8 +160,8 @@ foreach $res (keys(%btWins)) { #@files
 	    $genSTART = $START +$cstart-1;
 	    $genEND = $START +$cend ;
 	 }
-	 $chrLC =$CHR;
-	 $chrLC =~ s/CHR/chr/g;
+	 $chrLC =$CHR;                                                 # Set chromosome
+	 $chrLC =~ s/CHR/chr/g;                                        # Make chromosome lowercase
 	 $strSYM = "+";
 	 $strSYM = "-" if (($STR eq "M")||($STR eq "RM"));
 	 $line1 = "$chrLC\t$genSTART\t$genEND\t$estr\t$pcount\t$strSYM\n";
@@ -169,9 +170,9 @@ foreach $res (keys(%btWins)) { #@files
 	 $lkey="$cstart-$cend-$STR";
 	 if (!exists($tRNAlu{$lkey})){
 	    `echo "$line" > $tfile`;
-	    my @tRNAlist=`windowBed -a $tfile -b $TRNAfile -sm -w 40`; #>>> get overlap with tRNA
+	    my @tRNAlist=`windowBed -a $tfile -b $TRNAfile -sm -w 40`; # Get overlap with tRNA, with a 40nt buffer
 
-	    if (scalar(@tRNAlist)>=1){ #use first tRNA on list
+	    if (scalar(@tRNAlist)>=1){                                 # Use first tRNA on list
 	       $t = $tRNAlist[0];
 	       my @parts = split(/\t/,$t);
 	       $tlen=$parts[8]-$parts[7];
@@ -193,7 +194,7 @@ foreach $res (keys(%btWins)) { #@files
 #print "@parts\n";
 	    }
 	    else {
-	       $tRNAlu{$lkey} = "NA";
+	       $tRNAlu{$lkey} = "NA";                                  # No tRNA located
 	    }
 	 }
 

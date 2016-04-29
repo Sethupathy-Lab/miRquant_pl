@@ -51,6 +51,8 @@ $loc = 0;
 %counts = ();
 %tags = ();
 $count =0;
+
+#### This section counts number of unique reads (from what I can tell), and how many times those reads match multiple times ####
 while($ln=<BT>) {                                          # for line in bowtie hits
    chomp($ln);
    $count++;                                               # add 1 to count
@@ -66,7 +68,10 @@ while($ln=<BT>) {                                          # for line in bowtie 
 }
 $numTags = scalar (keys(%tags));                           # get length to tags dict
 print "numTags: $numTags\t,$count\n";                      # print length
-seek(BT, 0, SEEK_SET);                                     # part of flock, don't know purpose
+####
+
+
+seek(BT, 0, SEEK_SET);                                     # set to beginning of file
 $count =0;                                                 # reset count to zero
 while($ln=<BT>) {                                          # for each line in file 
    chomp($ln);
@@ -75,18 +80,18 @@ while($ln=<BT>) {                                          # for each line in fi
    $rs = $endB-$locB;                                      # get read length
 #if ($rs == $ReadSize) {
       $denom = 1;                                          # denom = 1
-      $denom = $tags{$readTag} if ($tags{$readTag}>0);     # or denom = value of tags[readTag] if > 0
-      $posInfo=join("-",$locB,$endB);                      # join locB and endB
-      $chrB = "$chrB1:$strB";                              # join chrB1 and strB
-      $count += $gs/$denom;                                # add gs/denom to count
-      if (!exists($counts{$chrB}{$posInfo})) {             # if posInfo not in counts dict
-	 $hits{$chrB}{$posInfo} = join(":",$chrB1,$locB,$endB,$strB) ;      # split into variables
+      $denom = $tags{$readTag} if ($tags{$readTag}>0);     # or # of times the read aligned throughout genome
+      $posInfo=join("-",$locB,$endB);                      # join start and end coordinates of bowtie hit 
+      $chrB = "$chrB1:$strB";                              # join chromosome and strand 
+      $count += $gs/$denom;                                # add gs/denom to count (1 / number of times aligned)
+      if (!exists($counts{$chrB}{$posInfo})) {             # if bowtie hit location not in counts dict
+	 $hits{$chrB}{$posInfo} = join(":",$chrB1,$locB,$endB,$strB) ;      # join chromosome, start, end, and strand together
 	 $counts{$chrB}{$posInfo} = $gs/$denom;            # set posInfo value to gs/denom
 #print "$gs / $denom = $counts{$chrB}{$posInfo}\n";
       }
       else {                                               # if posInfo in counts dict
 #	 print "$counts{$chrB}{$posInfo} += ";
-	 $counts{$chrB}{$posInfo}+=$gs/$denom;             # add gs/denom to counts[posInfo]
+	 $counts{$chrB}{$posInfo}+=$gs/$denom;             # add gs/denom to counts[posInfo]; I think this has to do with proportional assignment of counts
 #print "$chrB: $posInfo: $readTag\t$gs / $denom += $counts{$chrB}{$posInfo}\n";
 #print " $gs / $denom += $counts{$chrB}{$posInfo}\n";
       }
@@ -109,6 +114,14 @@ foreach $chr (keys (%hits)) {                              # for each chromosom 
    }
    close(TMP);
    my @readWin= `windowBed -a $tname -b $LibBed -sm -w 0`; # submit to windowBed, window equivalent?
+   # Examines a "window" around each feature in A and reports all features in B that overlap the window. 
+   # For each overlap the entire entry in A and B are reported. 
+   # -a     fileA (bowtie hits) 
+   # -b     fileB (NAME_merge.bed)
+   # -sm    Only report hits in B that overlap A on the _same_ strand
+   # -w 0   Base pairs added upstream and downstream of each entry in A when searching for overlaps in B. (Only looking for direct overlappers)
+
+
 #   $numKeys = scalar(keys(%{$hits{$chr}}));
 #   $numWins = scalar(@readWin);
 #print "numKeys = $numKeys\t numWins=$numWins\n";
@@ -129,11 +142,11 @@ foreach $chr (keys (%hits)) {                              # for each chromosom 
 	 my $pos = $locB;                                  # set position
 	 $pos = $locB + $readSize if ($strB eq "-");       # set position if minus string
 	 my $chN=uc($chN);                                 # uppercase chromo name
-	 foreach $p (keys (%{$mirList{$chN}})) {           # for p in mirList[chromosome]
-	    if ($mirStrand{$chN}{$p} eq $strB) {           # if mirStrand[chromosome][p] = strB
-	       $d = abs($p - $pos);                        # d = absolute value of p - position
+	 foreach $p (keys (%{$mirList{$chN}})) {           # for miR start location for miRs on the same chromosome
+	    if ($mirStrand{$chN}{$p} eq $strB) {           # if the strand is the same
+	       $d = abs($p - $pos);                        # d = the start position of the miR - start position
 	       if ($d<9){                                  # if d < 9
-		  $mir = $mirList{$chN}{$p};               # mir = mirList[chromosome][p]
+		  $mir = $mirList{$chN}{$p};               # set mir to miRNA
 		  last;                                    # break
 	       }
 	    }
@@ -148,7 +161,7 @@ foreach $chr (keys (%hits)) {                              # for each chromosom 
 	    $myEnd = $mystart+$readSize -1 ;              # end position
 	 }
 # $dirName = "test/"; #gResults
-	 $countz = $counts{$chr}{$location};              # set countz to chromosome location
+	 $countz = $counts{$chr}{$location};              # set countz to value stored in this dict
 	 $count += $countz;                               # add countz to count
 
 	 $outLine=join("\t",$chN,$mystart,$myEnd,$winName,$countz,$strB);   # assemble output line
@@ -165,19 +178,12 @@ foreach $chr (keys (%hits)) {                              # for each chromosom 
    $fname = $dirName .  $CHR . ".results";                # create output file name
 #print " $fname\t $mystart $myEnd  \n";
    open (OUT, ">>$fname") or die "cant open $fname";      # open output file name
-#   unless (flock(OUT, LOCK_EX | LOCK_NB)) {
-#      $| = 1;
-#      print "Waiting for lock...";
-#      flock(OUT, LOCK_EX)  or die "can't lock filename: $!";                                                                     
-#      print "got it.\n"
-#   }
-#   seek(OUT, 0, SEEK_END);
-   foreach $line (@outArray) {                           # write lines in out array to output file (named above)
+   foreach $line (@outArray) {                            # write lines in out array to output file (named above)
       print OUT "$line\n";
    }
    close(OUT);
 # $name=$baseDirName . '/g1Results/' . $ReadSize . '.txt';
 #`touch $name`;
 
-} #chr
-`rm $tname`;                                             # remove temporary file
+} 
+`rm $tname`;                                             # remove temporary file; was used for windowsBed
