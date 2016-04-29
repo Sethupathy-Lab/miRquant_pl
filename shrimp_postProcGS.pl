@@ -5,7 +5,15 @@
 # This script does things.
 #
 # Usage:
-#  perl shrimp_postProcGS.pl GRO-seq_file merge.bed_file SPECIES OUTPUT_FILE? 
+#  perl shrimp_postProcGS.pl GRO-seq_file merge.bed_file SPECIES SHRIMP_OUT
+#     
+#           GRO-seq_file  -  we dont currently have this type of data
+#           merge.bed_file - window bed file
+#           SPECIES  -  species this is being run for
+#           SHRIMP_OUT  -  output directory for SHRiMP results
+#    
+#
+##############################################################################
 use Fcntl qw(:flock SEEK_END SEEK_SET);
 use File::Basename;
 
@@ -30,7 +38,7 @@ else {
    open (MIR, "$progdirname/resources/rno_table.txt");
 }
 
-
+### This section makes miR dict to check if window overlaps with miR, used at the end of script
 %mirList=();
 %mirStrand=();
 while($mir=<MIR>) {                                                  # loop through miRs in table
@@ -44,18 +52,22 @@ while($mir=<MIR>) {                                                  # loop thro
    $mirList{$mchr}{$loc} = $mName;                                   # puts miR name in chromosome location dict
    $mirStrand{$mchr}{$loc} = $mStr;                                  # puts +/- strand info in chromosome location dict
 }
+###
+
 
 $tagCount=0;
 $tagPCount=0;
 $zCount=0;
 chomp($baseDirName);
 
+print "This is the arguments for the for loop @ARGV\n";
+
 foreach $dirL(@ARGV) {                                               # loop through directories in agruments 
 
    my ($base,$readSize) =split (/_/,$dirL);                          # base = 'readSize', readSize = actual length
    my $dir = $baseDirName . "/" . $dirL;                             # set directory name to read_size folder containing shrimp results 
    opendir(my $dh, $dir) || die "can't opendir $dir : $!";           # get file list from directory
-   @files = grep { /\.out/ && -f "$dir/$_" } readdir($dh);           # get the shrimp output files
+   @files = grep { /\.out/ && -f "$dir/$_" } readdir($dh);           # get the shrimp output files (eg 
    closedir $dh;
 
    %hits=();
@@ -71,15 +83,15 @@ foreach $dirL(@ARGV) {                                               # loop thro
 	    @misMatches = split( /\d+/,$estr);                       # split edit string at digit?
 	    if (!exists($maps{$readTag}{$window})) {                 # if window not in dictionary
 	       $maps{$readTag}{$window} = $score;                    # set these to values
-	       $hits{$window}{$readTag} = $line;
-	       $tagCount++;
+	       $hits{$window}{$readTag} = $line;                     # Add shrimp result line to dictionary
+	       $tagCount++;                                          # tagCount is # of SHRiMP results that align once to any given window
 	    }
-	    elsif ($score> $maps{$readTag}{$window}) {               # else if it is in dictionary
-	       $maps{$readTag}{$window} = $score;                    # do same, but don't change tagCount
-	       $hits{$window}{$readTag} = $line;
+	    elsif ($score> $maps{$readTag}{$window}) {               # if read aligns somewhere else in window with higher score
+	       $maps{$readTag}{$window} = $score;                    # replace score in maps[readTag[Window]] dict
+	       $hits{$window}{$readTag} = $line;                     # replace SHRiMP result line
 	    }
 	    unless (scalar(@misMatches) >0) {                        # if editString only #s, no mismatches found
-	       $perMatch{$readTag}{$window} = 1;       
+	       $perMatch{$readTag}{$window} = 1;                     # puts read in perMatch dictionary if perfectly aligned 
 	    }
 	 }
       close(RES);
@@ -98,6 +110,8 @@ foreach $dirL(@ARGV) {                                               # loop thro
    $numTags2 = scalar(keys(%maps));                                  # These should be the same as above since
    print "NumTags 2: $numTags2 ($perMatchCount)\t";                  # section hashed out
 #print "Shrimp Discarded: $perMatchCount, Reads\n"; # Remove perfect Matches
+
+#### Determines the maxscore for a read across all alignment locations ####
    $tname =`mktemp`;                                       # make temporary variable          
    chomp($tname);
    foreach $k (keys(%maps)) {                              # for all keys in maps
@@ -106,13 +120,13 @@ foreach $dirL(@ARGV) {                                               # loop thro
       @WindArr = ();
       $maxStr='';
       foreach $i (keys(%{$maps{$k}})) {                    # for all keys in maps[key]
-	 my($chr,$loc,$str) = split(/[:\(\)]/,$i);         # get chromosome, location, string info
+	 my($chr,$loc,$str) = split(/[:\(\)]/,$i);         # get chromosome, location, strand info
 	 if ($maps{$k}{$i}>$maxScore) {                    # if value is greater than maxscore
 	    $maxScore = $maps{$k}{$i};                     # set maxscore to value
-	    $maxStr=$str ;                                 # set maxstring to value name
+	    $maxStr=$str ;                                 # set maxstring to strand
 	 }
 	 elsif ($maps{$k}{$i} == $maxScore) {              # if not greater than maxscore
-	    if ($str =~ /R/) {                             # prefer the RNA strand
+	    if ($str =~ /R/) {                             # R denotes a tRNA result, if equal maxScores, this is preferred
 	       $maxStr=$str ;                              # set maxstring to value name
 	    }
 	 }
@@ -127,21 +141,21 @@ foreach $dirL(@ARGV) {                                               # loop thro
 	    delete ($maps{$k}{$i});                        # remove key entry from maps dict
 	    delete ($hits{$i}{$k});                        # remove key entry from hits dict
 	 }
-	 elsif ( ($maps{$k}{$i} == $maxScore) && ($maxStr =~ /R/) && ($str !~ /R/)) {    # if equal to max score and max String not RNA strand and string not RNA strand
+	 elsif ( ($maps{$k}{$i} == $maxScore) && ($maxStr =~ /R/) && ($str !~ /R/)) {    # if equal to max score and maxStr is tRNA and string not RNA strand
 	    $logic2=($maxStr=~/R/);
 	    $logic3=($str!~/R/);
-# delete matches to DNA strand if the max score is on RNA strand
+# delete matches to DNA strand if the max score is on tRNA strand
 	    delete ($maps{$k}{$i});
 	    delete ($hits{$i}{$k});
 	 }
 	 else {
 	    $tmp = $i;
-	    $tmp =~ s/\(\+\)/:P/g;
-	    $tmp =~ s/\(-\)/:M/g;
-	    $tmp =~ s/\(R\+\)/:RP/g;                              # JTB
-	    $tmp =~ s/\(R-\)/:RM/g;                               # JTB
+	    $tmp =~ s/\(\+\)/:P/g;                                # Replace + in window name ($i) with :P
+	    $tmp =~ s/\(-\)/:M/g;                                 # Replace + in window name ($i) with :M
+	    $tmp =~ s/\(R\+\)/:RP/g;                              # Replace + in window name ($i) with :RP                            
+	    $tmp =~ s/\(R-\)/:RM/g;                               # Replace + in window name ($i) with :RM
 	    my($chr,$posA,$posB,$str) = split(/[:-]/,$tmp);       # set chromosome, positions, and orientation
-	    my ($rT,$win,$str2,$cst2,$cend2,$rstart2,$rend2,$rlen2,$score2,$estr2) = split(/\t/,$hits{$i}{$k});
+	    my ($rT,$win,$str2,$cst2,$cend2,$rstart2,$rend2,$rlen2,$score2,$estr2) = split(/\t/,$hits{$i}{$k});  # This is a SHRiMP results line again
 	    if (($str eq "P")||($str eq "RP")) {                  # if strandedness = positive or RNA positive 
 	       $str = "+";                                        # plus string
 	       $t1 = $posA;                                       # t1 = window start
@@ -156,7 +170,7 @@ foreach $dirL(@ARGV) {                                               # loop thro
 	       $posB = $t1 - $cst2;
 	    }
 	    $chr =~ s/CHR/chr/g;                                  # change capital CHR to lowercase chr
-	    $bedline = join("\t",$chr,$posA,$posB,$i,1,$str);     # set bedline to new coordinates
+	    $bedline = join("\t",$chr,$posA,$posB,$i,1,$str);     # set bedline to new coordinates; chromosome, start, end, window name, 1, strand
 	    push(@WindArr,$bedline);                              # add to windows array
 	 }
       }
@@ -165,7 +179,7 @@ foreach $dirL(@ARGV) {                                               # loop thro
       $denom = 0;
       if ($GSLib eq "NoGS") {                                        # Ours is currently always NoGS
 	 foreach $line (@WindArr) {                                  # for each window
-	    my($co,$so,$eo,$wino,$gs,$stro) = split(/\t/,$line);     # GS=1 above
+	    my($co,$so,$eo,$wino,$gs,$stro) = split(/\t/,$line);     # GS=1 above, so adds 1 to denom for each line
 	    $denom += $gs;                                         
 	    $tags{$k}{$wino} = $gs;
 	 }
@@ -183,7 +197,7 @@ foreach $dirL(@ARGV) {                                               # loop thro
       }
 
       foreach $i (keys(%{$maps{$k}})) {                              # for each key in maps[key]
-	 if ($denom==0) {                                            # if denominator = 0
+	 if ($denom==0) {                                            # if denominator = 0; will never be since NoGS
 	    $denom = 1;                                              # set denom to 1
 	    $zCount++;                                               # add 1 to zCount
 	 }
@@ -197,20 +211,20 @@ foreach $dirL(@ARGV) {                                               # loop thro
    }                                                                 # END: foreach $k (keys(%maps))
    $numTags = scalar(keys(%maps));                                   # get number of keys in maps dict
    print "NumTags 3: $numTags \n";                                   # prints this info
-   `rm $tname`;                                                      # removes tname (hased out earlier)
+   `rm $tname`;                                                      # Never used, only seems to be populated with GroSeq, we dont have this data
 
-   $dname = $baseDirName . '/g1Results';                             # maybe makes g1Results
+   $dname = $baseDirName . '/g1Results';                             # sets up path for g1Results
    foreach $k (keys(%hits)) {                                        # for each window in hits dict
       $tmp = $k;                                                     # temp equals window
-      $tmp =~ s/\(\+\)/:P/g;                                         # check window orientation
-      $tmp =~ s/\(R\+\)/:RP/g;
-      $tmp =~ s/\(-\)/:M/g;
-      $tmp =~ s/\(R-\)/:RM/g;
+      $tmp =~ s/\(\+\)/:P/g;                                         # replaces + with :P
+      $tmp =~ s/\(R\+\)/:RP/g;                                       # replaces + with :RP
+      $tmp =~ s/\(-\)/:M/g;                                          # replaces + with :M
+      $tmp =~ s/\(R-\)/:RM/g;                                        # replaces + with :RM
       my($chr,$st,$sp,$str) = split(/[:-]/,$tmp);                    # get chromosome, start, stop, string orient
       $dirName = $dname . "/" . $chr;                                # set directory name by chromosome
       `mkdir -p $dirName`;                                           # make chromo folder (& g1Results if not made)
       $fname = $dirName . "/" . $k . ".results";                     # set output file name
-      $fname2 = $dirName . "/" . $dirL . $k . ".results";                     # set output file name
+      $fname2 = $dirName . "/" . $dirL . $k . ".results";            # set output file name
       if( length(keys(%{$hits{$k}}))>0){                             # if length of value in hits[key] > 0
 	 open (OUT, ">>$fname") or die "cant open $fname";           # open output file name
 	 unless (flock(OUT, LOCK_EX | LOCK_NB)) {                    # file lock, do not understand
@@ -219,7 +233,7 @@ foreach $dirL(@ARGV) {                                               # loop thro
 	    flock(OUT, LOCK_EX)  or die "can't lock filename: $!";
 	    print "got it.\n"
 	 } 
-	 seek(OUT, 0, SEEK_END);
+	 seek(OUT, 0, SEEK_END);                                     # write at end of file
 
 	 foreach $h (keys(%{$hits{$k}})) {                           # for each key in hits[key]
 	    my ($readTag2,$window2,$strand2,$cstart2,$cend2,$rstart2,$rend2,$rlen2,$score2,$estr2) = split(/\t/,$hits{$k}{$h});
@@ -231,10 +245,10 @@ foreach $dirL(@ARGV) {                                               # loop thro
 	    $mir='NA';
 	    $winStr = "+";
 	    $winStr = "-" if ($str =~ /M/);
-	    foreach $p (keys (%{$mirList{$chr}})) {                  # for key in mirList[chromosome]
-	       if ($mirStrand{$chr}{$p} eq $winStr) {                # if mirStrand[chromosome position = winstr
-		  $d = abs($p - $pos);                               # d = absolute value of p - position
-		  if ($d<9){                                         # if d is less than 9
+	    foreach $p (keys (%{$mirList{$chr}})) {                  # for each miR on that chromosome
+	       if ($mirStrand{$chr}{$p} eq $winStr) {                # if miR is on same strand as the window
+		  $d = abs($p - $pos);                               # d = absolute value of miR position - window position
+		  if ($d<9){                                         # if the distance between the miR start and alignment is less than 9
 		     $mir = $mirList{$chr}{$p};                      # mir = mir from mirlist
 		     last;                                           # equivalent to break in python
 		  }
