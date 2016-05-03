@@ -26,7 +26,7 @@ bit <- melt(lenData, id.vars = "X")
 wrap = round(length(lenData) * .33)
 
 # Write output to lenDistHistogram.png
-png("lenDistHistogram.png", width = wrap + wrap * .2, height = wrap, units = "in", res = 150)
+png("lenDistHistogram.png", width = 10, height = 10, units = "in", res = 150)
 ggplot(bit, aes(x = X, y = value, fill = variable)) +
   geom_bar(stat="identity") +
   facet_wrap(~variable, ncol = wrap) +
