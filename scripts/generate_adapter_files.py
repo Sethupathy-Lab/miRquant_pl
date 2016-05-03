@@ -1,20 +1,16 @@
 #!/usr/bin/python2
 
 usage='''
-###############################################################################
-#
-# This determines the adaptor sequence for sample based on the samples file
-# name, either automatically or by user input.  If user input, parts are
-# separated by '_'
-#
-# Usage: python generateTSadaptor.py [location_in_name] path_to_files/*.fastq
-#
-#  Required: path_to_files     this is the path to the fastq samples
-# 
-#  Optional: location_in_name  if user wants to state where adapter is in name.
-#                              -better to try without stating first
-#
-###############################################################################
+This determines the adaptor sequence for a sample based on the sample's file
+name, either automatically or by user input.  If by user input, parts are
+separated by '_'
+
+Usage: python generateTSadaptor.py [location_in_name] path_to_files/*.fastq
+
+  Required: path_to_files     this is the path to the fastq samples
+ 
+  Optional: location_in_name  if user wants to state where adapter is in name.
+                              -better to try without stating first
 '''
 
 import sys
@@ -50,6 +46,7 @@ for file in fastqs:
         else:
             adaptor = adaptor_begin + adapt_bit + adaptor_end
             with open('{}{}.adaptor'.format(path, basename), 'w') as f:
+                print "Sample:", base
                 print "Output saved as:", f.name
                 print "Adaptor sequence:", adaptor
                 print
@@ -61,6 +58,7 @@ for file in fastqs:
             continue
         adaptor = adaptor_begin + adapt_bit + adaptor_end
         with open('{}{}.adaptor'.format(path, basename), 'w') as f:
+            print "Sample:", base
             print "\nOutput saved as:", f.name
             print "Adaptor sequence:", adaptor
             print
