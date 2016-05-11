@@ -45,7 +45,7 @@ foreach $a (@ARGV) {
    chop($Name);
   
    chdir $topDir or die("can't change to dir $topDir\n");
-   `bsub tar -zcvf $Name.tgz IntermediateFiles`;
+   `bsub -J tarring tar -zcvf $Name.tgz IntermediateFiles`;
    `echo "Mapped: $Count" >> $Name.stats`;
    `echo "miRMapped: $miRcount" >> $Name.stats`;
 }

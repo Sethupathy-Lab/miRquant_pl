@@ -102,7 +102,7 @@ close(MIR);
 $tfile=`mktemp`;
 chomp($tfile);
 print "$tfile \n";
-foreach $res (keys(%btWins)) {                                         # bowtie results files
+foreach $res (keys(%btWins)) {                                         # shrimp results files
    %maps=();                                                           # store edits
    %ExMat =();                                                         # count of exact maps
    %mirs=();                                                           # Name of mir/ potential mir
@@ -113,13 +113,13 @@ foreach $res (keys(%btWins)) {                                         # bowtie 
    %eCounts=();                                                        # store edits
    my $tmp = $res;
 # Replace +- with PM for splitting
-   $tmp =~ s/\(\+\)/:P:/g;
-   $tmp =~ s/\(-\)/:M:/g;
-   $tmp =~ s/\(R-\)/:RM:/g;
-   $tmp =~ s/\(R\+\)/:RP:/g;
+   $tmp =~ s/\(\+\)/:P:/g;                                             # replace - with P
+   $tmp =~ s/\(-\)/:M:/g;                                              # replace - with M
+   $tmp =~ s/\(R-\)/:RM:/g;                                            # replace - with M for tRNA results
+   $tmp =~ s/\(R\+\)/:RP:/g;                                           # replace - with P for tRNA results
 # Split parts of name
-   my ($CHR, $START, $STOP, $STR,$EXT) = split(/[:-]/,$tmp);
-   if ($STR eq "P") {
+   my ($CHR, $START, $STOP, $STR,$EXT) = split(/[:-]/,$tmp);           # split edited file name into chromosome, contig start, contig end, string, and extension (.results)
+   if ($STR eq "P") {                                                  # next bit is setting sSTR to +, -, R+, & R- if P, M, RP, RM, accordingly
       $sSTR="+";
    }
    elsif($STR eq "RP") {
@@ -132,49 +132,50 @@ foreach $res (keys(%btWins)) {                                         # bowtie 
       $sSTR = "R-";
    }
 
-   $filename = "$dir/$res";
+   $filename = "$dir/$res";                                            # sets filename to path_to_file + filename (/proj/seth_lab/smallRNA/PROJECT/SAMPLE/IntermediateFiles/g1Results/CHR/file.results)
 #print "$tmp\t$filename\n";
-   if (-e $filename) {
-      %tRNAlu=();
+   if (-e $filename) {                                                 # if file exists
+      %tRNAlu=();                                                     
       open(RES,"$filename") or die "cant open $filename";              # SHRiMP results file
-# Process each read in window
+# Process each read in shrimp result file
       while($line = <RES>) {
 	 chomp($line);
 	 my ($readTag,$window,$strand,$cstart,$cend,$rstart,$rend,$rlen,$score,$estr,$mir,$pcount) = split(/\t/,$line);  # Split SHRiMP result line
 	 my $readkey=join("\t",$window,$strand,$cstart,$cend,$rstart,$rend,$rlen,$score,$estr,$mir);                     # Makes dict key
-	 $eCounts{$readkey} = 0 if (!exists($eCounts{$readkey}));      # Puts these in dictionary, which is iterated through below
+	 $eCounts{$readkey} = 0 if (!exists($eCounts{$readkey}));      # If not in dictionary, put into dictionary; iterated through below
 	 $eCounts{$readkey} +=$pcount;
       }
       close(RES);
       foreach $read (keys(%eCounts)){
 	 my ($window,$strand,$cstart,$cend,$rstart,$rend,$rlen,$score,$estr,$mir) = split(/\t/,$read);
-	 $pcount=$eCounts{$read};
+	 $pcount=$eCounts{$read};                                      # Set pcount to stored pcount from above (very end of result line)
 #print "$read\t$pcount\n";
+
 # Get the genomic coord for out to bed file
-	 if (($STR eq "M")||($STR eq "RM")) {
-	    $genSTART = $STOP - $cend;
-	    $genEND = $STOP - $cstart +1;
+	 if (($STR eq "M")||($STR eq "RM")) {                          # Check if minus string
+	    $genSTART = $STOP - $cend;                                 # set start coord
+	    $genEND = $STOP - $cstart +1;                              # set end coord
 	 }
-	 else
+	 else                                                          # If plus string
 	 {
-	    $genSTART = $START +$cstart-1;
-	    $genEND = $START +$cend ;
+	    $genSTART = $START +$cstart-1;                             # set start coord
+	    $genEND = $START +$cend ;                                  # set end coord
 	 }
 	 $chrLC =$CHR;                                                 # Set chromosome
 	 $chrLC =~ s/CHR/chr/g;                                        # Make chromosome lowercase
-	 $strSYM = "+";
-	 $strSYM = "-" if (($STR eq "M")||($STR eq "RM"));
-	 $line1 = "$chrLC\t$genSTART\t$genEND\t$estr\t$pcount\t$strSYM\n";
-	 $line = "$chrLC\t$genSTART\t$genEND\t$mir\t$pcount\t$strSYM\n";
-	 push (@bedFile,$line1);
-	 $lkey="$cstart-$cend-$STR";
-	 if (!exists($tRNAlu{$lkey})){
-	    `echo "$line" > $tfile`;
+	 $strSYM = "+";                                                # set strSYM to +
+	 $strSYM = "-" if (($STR eq "M")||($STR eq "RM"));             # If minus, change strSYM to -
+	 $line1 = "$chrLC\t$genSTART\t$genEND\t$estr\t$pcount\t$strSYM\n";     # Set line1 to these values
+	 $line = "$chrLC\t$genSTART\t$genEND\t$mir\t$pcount\t$strSYM\n";       # Same as above, but editstring is now mir
+	 push (@bedFile,$line1);                                       # Put line1 into bedFile array
+	 $lkey="$cstart-$cend-$STR";                                   # Set lkey to chromosomeStart-chromosomeEnd-string
+	 if (!exists($tRNAlu{$lkey})){                                 # If lkey is in tRNAlu
+	    `echo "$line" > $tfile`;                                   # Add line to output file 'tfile'
 	    my @tRNAlist=`windowBed -a $tfile -b $TRNAfile -sm -w 40`; # Get overlap with tRNA, with a 40nt buffer
 
-	    if (scalar(@tRNAlist)>=1){                                 # Use first tRNA on list
-	       $t = $tRNAlist[0];
-	       my @parts = split(/\t/,$t);
+	    if (scalar(@tRNAlist)>=1){                                 # If there are multiple tRNAs
+	       $t = $tRNAlist[0];                                      # Use first tRNA on list
+	       my @parts = split(/\t/,$t);                             # 
 	       $tlen=$parts[8]-$parts[7];
 	       $tst = $parts[1] - $parts[7] ;
 	       $tst = $parts[8] - $parts[2] if ($parts[5] eq '-');
@@ -538,7 +539,8 @@ foreach $res (keys(%btWins)) {                                         # bowtie 
 #PRINT outputs to summary files
 
 
-   ###  FROM HERE DOWN IS WRITING OUTPUTS FROM DICTS FOR OUTPUTS
+
+###  FROM HERE DOWN IS WRITING OUTPUTS FROM DICTS FOR OUTPUTS
    $TdiscardCount += $discardCount;
    if (! -d $outDir . "/5p_summary") {
        system("mkdir $outDir/5p_summary")

@@ -137,6 +137,7 @@ EXT=`echo "$ARG" |awk -F . '{print $NF}'`        # gets the last field of file n
 
    OUTm=${LIB}_merge.bed                         # Output name for mergeBed output bed (these are the windows that will be aligned to)
    OUTt=${LIB}_tmpJTB.bed                        # Temp output name (pre-sorted)
+   OUTt2=${LIB}_tmpJTB2.bed                       # Temp output name 2
    OUTgse=${LIB}_allGSE.bed                      # Output name for aligned reads bed 
    OUTgseu=${LIB}_allGSEu.bed                    # Output name for aligned reads and tRNAs bed
    OUTl=${LIB}_LIB.fa
@@ -153,8 +154,11 @@ EXT=`echo "$ARG" |awk -F . '{print $NF}'`        # gets the last field of file n
 #Add tRNA transcripts to windows
    echo Add tRNA transcripts to windows with slopBed...
    slopBed -b 40 -i $tRNA -g $BI.chromSizes >> $OUTgseu                        # add tRNA sequences
-   mergeBed -d 65 -s -n -i $OUTgseu > $OUTt                                    # merge bed features that overlap or are withing 65nt of each other
-   awk '{print $1"\t"$2"\t"$3"\tNAME\t"$4"\t"$5}' $OUTt >$OUTm                                                                                                                      
+   echo Merging files with mergeBed...
+   sort -k1,1 -k2,2n $OUTgseu > $OUTt2                                         # sorted temp file
+   mergeBed -d 65 -s -c 1 -o count -i $OUTt2 > $OUTt                           # merge bed features that overlap or are withing 65nt of each other
+   rm $OUTt2                                                                   # remove temp2 file
+   awk '{print $1"\t"$2"\t"$3"\tNAME\t"$5"\t"$4}' $OUTt >$OUTm                 # CHECK THIS IF THINGS GO ASQEW                                                                                                     
    rm $OUTt                                                                    # remove original (non-awked) mergeBed file
    slopBed -b 5  -i $OUTm -g $BI.chromSizes >$OUTt                             # add 5nt to each side of merged bed file (this is the windows to align to)
    mv $OUTt $OUTm                                                              # change temp name to _merge.bed name

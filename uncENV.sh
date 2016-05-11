@@ -13,10 +13,9 @@ module unload perl
 module unload git
 module unload python
 
-module load r/2.15.1
+module load r/3.2.2
 module load bowtie/1.1.0
-module load bowtie2/2.2.1
 module load samtools/1.3
-module load bedtools/2.17.0
+module load bedtools/2.25.0
 module load bamtools/1.0.2
 module load perl/5.12.0
