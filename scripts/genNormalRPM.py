@@ -58,14 +58,15 @@ def calculate_RPMM_and_seperate_miRs(datout, li, total_counts, species):
     thresh = 100
     sample_miRs = {}        
     miRs_over_thresh = []
-    for file in datout:
+    sorted_files = sorted(datout)
+    for file in sorted_files:
         sample_miRs[file] = {}
         print "\t{}".format(file),
     print
     c = 0
     for miR in li:
         print miR,
-        for file in datout:
+        for file in sorted_files:
             re = 0
             if miR in datout[file]:
                 re = 1000000*(float(datout[file][miR])/total_counts[file])
@@ -84,7 +85,7 @@ def write_miRs_only_RPMM(sample_miRs):
     '''Writes RPMM file for only the miRs to an output file, called
     called RPMM_miRs_only.tsv'''
     all_miRs = set([miR for key in sample_miRs for miR in sample_miRs[key]])
-    sample_list = sample_miRs.keys()
+    sample_list = sorted(sample_miRs.keys())
     with open('RPM_miRs_only.tsv', 'w') as f:
         f.write('\t{}\n'.format('\t'.join(sample_list)))
         for miR in all_miRs:
@@ -100,7 +101,7 @@ def write_miRs_only_RPMM(sample_miRs):
 def write_miRs_over_100(sample_miRs, miRs_over_thresh, thresh):
     '''Writes miRs where RPMM is greater than threshold for at least one sample
     to an output file (called RPMM_miRs_over_(threshold).tsv'''
-    sample_list = sample_miRs.keys()
+    sample_list = sorted(sample_miRs.keys())
     with open('RPM_miRs_over_{}.tsv'.format(str(thresh)), 'w') as f:
         f.write('\t{}\n'.format('\t'.join(sample_list)))
         for miR in miRs_over_thresh:
