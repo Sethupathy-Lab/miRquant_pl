@@ -1,7 +1,8 @@
-#Small RNA Pipeline				
+#miRquant				
 Last update to README: 05/27/16
 
-##Check out a copy of the smRNA pipeline code:
+## miRquant setup
+####Check out a copy of the smRNA pipeline code:
 If you don’t already have a directory:
 
 ```
@@ -17,34 +18,24 @@ Now you will have a directory: `/proj/seth_lab/users/ONYEN/smRNA_pipeline`
 Most code is run from this directory!
 
 
-##Make a folder for your run in the smallRNA directory (/proj/seth_lab/projects/smallRNA/)
+####Make a folder for your run in the smallRNA directory (/proj/seth_lab/projects/smallRNA/)
 
+```
 $ mkdir /proj/seth_lab/projects/smallRNA/MY_PROJECT_NAME
+```
 
-Copy files from where ever they are to your smallRNA directory:
-$ cp /path/to/sequencing_files/* 	/proj/seth_lab/projects/smallRNA/MY_PROJECT_NAME
-
-Change to project directory and uncompress files:
-
+####Copy files from where ever they are to your smallRNA directory:
+```
+$ cp /path/to/sequencing_files/* /proj/seth_lab/projects/smallRNA/MY_PROJECT_NAME
+```
+####Change to project directory and uncompress files:
+```
 $ cd /proj/seth_lab/projects/smallRNA/MY_PROJECT_NAME
 
 $ bsub gunzip *.gz
+```
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+##Running miRQuant
 Make the adaptor files for the samples:
 $ cd /proj/seth_lab/users/ONYEN/smRNA_pipeline/scripts
 $ module load python/2.7.6
