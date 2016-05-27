@@ -116,7 +116,9 @@ EMmiss = # of reads that fail to exactly align to genome
 
 ####Run the next stage to collect results:
 From your pipeline directory (/proj/seth_lab/users/ONYEN/smRNA_pipeline):
-`$ bash runC.sh spec /proj/seth_lab/projects/smallRNA/MY_PROJECT_NAME/*/IntermediateFiles/g1Results/CHR*.results`
+```
+$ bash runC.sh spec /proj/seth_lab/projects/smallRNA/MY_PROJECT_NAME/*/IntermediateFiles/g1Results/CHR*.results
+```
 
 Once all of those jobs have finished running, run:
 ```
