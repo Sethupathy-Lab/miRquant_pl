@@ -122,7 +122,7 @@ $ bash runC.sh spec /proj/seth_lab/projects/smallRNA/MY_PROJECT_NAME/*/Intermedi
 
 Once all of those jobs have finished running, run:
 ```
-$ bash post_runC.sh /proj/seth_lab/projects/smallRNA/MY_PROJECT_NAME/*/IntermediateResults/g1Results
+$ bash post_runC.sh /proj/seth_lab/projects/smallRNA/MY_PROJECT_NAME/*/IntermediateFiles/g1Results
 ```
 
 ####Run the next stage to generate TAB separated files:
