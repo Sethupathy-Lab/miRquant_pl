@@ -128,7 +128,7 @@ $ bash post_runC.sh /proj/seth_lab/projects/smallRNA/MY_PROJECT_NAME/*/Intermedi
 ####Run the next stage to generate TAB separated files:
 ```
 $ cd /proj/seth_lab/users/ONYEN/smRNA_pipeline/scripts
-$ bsub –o logFileName.log perl process_all_summary2tab.pl /proj/seth_lab/users/ONYEN/smRNA_pipeline hsa /proj/seth_lab/projects/smallRNA/MY_PROJECT_NAME/*/IntermediateFiles/g1Results/shift_summary.txt
+$ bsub -o logFileName.log perl process_all_summary2tab.pl /proj/seth_lab/users/ONYEN/smRNA_pipeline hsa /proj/seth_lab/projects/smallRNA/MY_PROJECT_NAME/*/IntermediateFiles/g1Results/shift_summary.txt
 ```
 After run finishes, you should see:
 ```
