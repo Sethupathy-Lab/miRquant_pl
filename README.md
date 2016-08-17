@@ -187,13 +187,21 @@ lenDistHistogram.png	- optional, length distribution image, output if --image fl
 ####To generate normalized expression (RPMM) across multiple samples:
 ```
 $ cd /proj/seth_lab/users/ONYEN/smRNA_pipeline/scripts
-$ bsub –o RPMM.log python genNormalRPM.py hsa 	/proj/seth_lab/projects/smallRNA/MY_PROJECT_NAME/*/TAB_lenDist_summary.txt
+$ bsub –o RPMM.log python genNormalRPM.py spec /proj/seth_lab/projects/smallRNA/MY_PROJECT_NAME/*/TAB_lenDist_summary.txt
 ```
 Outputs:
 RPM_all.tsv			-	RPM for everything
 RPM_miRs_only.tsv		-	RPM for miRs
 RPM_mirRs_over_100.tsv	-	RPM for miRs if the RPM for the miR was over 100 for at
 					least sample
+
+####To generate normalized expression (RPMMMM) across multiple samples:
+```
+$ cd /proj/seth_lab/users/ONYEN/smRNA_pipeline/scripts
+$ bsub –o RPMMM.log python genNormalRPMMM.py spec /proj/seth_lab/projects/smallRNA/MY_PROJECT_NAME/*/TAB_3p_summary_mir.txt
+```
+Outputs:
+RPMMM.csv			-	RPMMM for everything
 
 ####To generate sample correlations:
 Correlation between samples in the miRs over 100 output.  This should be possible to do in excel.  I have included the R script I use, which requires variables to be switched within and is run on my local machine.  The R script is smRNAseq_correlation.R
