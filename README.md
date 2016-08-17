@@ -36,10 +36,18 @@ $ bsub gunzip *.gz
 ```
 
 ##Running miRQuant
+
+####Load proper modules and environmental variables:
+```
+$ cd /proj/seth_lab/users/ONYEN/smRNA_pipeline
+$ module clear
+Answer yes to the prompt on whether to clear modules, then:
+$ source uncENV.sh
+```
+
 ####Make the adaptor files for the samples:
 ```
 $ cd /proj/seth_lab/users/ONYEN/smRNA_pipeline/scripts
-$ module load python/2.7.6
 $ bsub -oo adapter.log python generate_adapter_files.py /proj/seth_lab/projects/smallRNA/MY_PROJECT_NAME/*.fastq
 ```
 For file names such as File_Cond_AAGGCC_etc.fastq: the following script will pull the barcode out of the file name and create the adapter files. It should automatically determine where the barcode is in the file name, but if it isn't able to (which will be indicated by an error in the log), you need to tell the script where the index is. It separates the parts joined by the “_” character. In the above example the word 'File' is in position 0, the word 'Cond' is in position 1, and the index AAGGCC is in position 2. So the command would be:
@@ -64,14 +72,6 @@ Your adapter sequence should only include nucleotides, if it doesn't, try re-run
 
 ALTERNATLY: If not a TrueSeq library prep you need a file with the same name as the .fastq file with the extension .adaptor (note the spelling! There was originally two separate files .adapter and .adaptor, and I have never bothered to change the code.): The file must contain one line with the 3’ adapter for the prep used.
 
-
-####Load proper modules and environmental variables:
-```
-$ cd /proj/seth_lab/users/ONYEN/smRNA_pipeline
-$ module clear
-Answer yes to the prompt on whether to clear modules, then:
-$ source uncENV.sh
-```
 
 ####Run the chain submission script:
 From the smallRNApipeline directory:
