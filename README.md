@@ -39,7 +39,7 @@ $ bsub gunzip *.gz
 
 ####Load proper modules and environmental variables:
 ```
-$ cd /proj/seth_lab/users/ONYEN/smRNA_pipeline
+$ cd /proj/seth_lab/users/ONYEN/miRquant
 $ module clear
 Answer yes to the prompt on whether to clear modules, then:
 $ source uncENV.sh
@@ -47,7 +47,7 @@ $ source uncENV.sh
 
 ####Make the adaptor files for the samples:
 ```
-$ cd /proj/seth_lab/users/ONYEN/smRNA_pipeline/scripts
+$ cd /proj/seth_lab/users/ONYEN/miRquant/scripts
 $ bsub -oo adapter.log python generate_adapter_files.py /proj/seth_lab/projects/smallRNA/MY_PROJECT_NAME/*.fastq
 ```
 For file names such as File_Cond_AAGGCC_etc.fastq: the following script will pull the barcode out of the file name and create the adapter files. It should automatically determine where the barcode is in the file name, but if it isn't able to (which will be indicated by an error in the log), you need to tell the script where the index is. It separates the parts joined by the “_” character. In the above example the word 'File' is in position 0, the word 'Cond' is in position 1, and the index AAGGCC is in position 2. So the command would be:
@@ -76,14 +76,14 @@ ALTERNATLY: If not a TrueSeq library prep you need a file with the same name as 
 ####Run the chain submission script:
 From the smallRNApipeline directory:
 ```
-$ cd /proj/seth_lab/users/ONYEN/smRNA_pipeline
+$ cd /proj/seth_lab/users/ONYEN/miRquant
 
 $ bsub -o chainSub.log bash chainSubmission.sh 10 1 spec 33 NoGS /proj/seth_lab/projects/smallRNA/MY_PROJECT_NAME/*.fastq
 
 chainSub.log – log file can be named anything, but chainSub.log makes sense
 spec – species; hsa for human, mmu for mouse, rno for rat
 ```
-Review /proj/seth_lab/users/ONYEN/smRNA_pipeline/example.README for an explanation of the inputs.
+Review /proj/seth_lab/users/ONYEN/miRquant/example.README for an explanation of the inputs.
 
 Check that your jobs are running
 `$ bjobs`
@@ -115,7 +115,7 @@ EMmiss = # of reads that fail to exactly align to genome
 ```
 
 ####Run the next stage to collect results:
-From your pipeline directory (/proj/seth_lab/users/ONYEN/smRNA_pipeline):
+From your pipeline directory (/proj/seth_lab/users/ONYEN/miRquant):
 ```
 $ bash runC.sh spec /proj/seth_lab/projects/smallRNA/MY_PROJECT_NAME/*/IntermediateFiles/g1Results/CHR*.results
 ```
@@ -127,8 +127,8 @@ $ bash post_runC.sh /proj/seth_lab/projects/smallRNA/MY_PROJECT_NAME/*/Intermedi
 
 ####Run the next stage to generate TAB separated files:
 ```
-$ cd /proj/seth_lab/users/ONYEN/smRNA_pipeline/scripts
-$ bsub -o logFileName.log perl process_all_summary2tab.pl /proj/seth_lab/users/ONYEN/smRNA_pipeline hsa /proj/seth_lab/projects/smallRNA/MY_PROJECT_NAME/*/IntermediateFiles/g1Results/shift_summary.txt
+$ cd /proj/seth_lab/users/ONYEN/miRquant/scripts
+$ bsub -o logFileName.log perl process_all_summary2tab.pl /proj/seth_lab/users/ONYEN/miRquant hsa /proj/seth_lab/projects/smallRNA/MY_PROJECT_NAME/*/IntermediateFiles/g1Results/shift_summary.txt
 ```
 After run finishes, you should see:
 ```
