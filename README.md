@@ -40,8 +40,6 @@ $ bsub gunzip *.gz
 ####Load proper modules and environmental variables:
 ```
 $ cd /proj/seth_lab/users/ONYEN/miRquant
-$ module clear
-Answer yes to the prompt on whether to clear modules, then:
 $ source uncENV.sh
 ```
 
