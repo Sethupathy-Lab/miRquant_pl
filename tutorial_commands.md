@@ -4,9 +4,9 @@
 The other readme is more expansive with the decriptions of the steps and explanations of the commands.  
 However, this will allow you to copy and paste the different steps and complete the tutorial, then try the tutorial using the main directions.
 
-Remember:
-tab completion is out friend
-* is a wildcard, meaning * alone is all files, m* is all files starting with m, *txt are all files ending with txt, and so forth.
+Remember:  
+Tab completion is the most useful of all skills to learn.  It'll speed up your navigation of the command line and avoid spelling issues.  
+The * is a wildcard, meaning * alone is all files, m* is all files starting with m, *txt are all files ending with txt, and so forth.
 
 #### Set path to tutorial folder to a variable
 This section will be the only section different for you for the rest of the tutorial.
