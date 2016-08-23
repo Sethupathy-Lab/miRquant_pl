@@ -29,6 +29,12 @@ cd $tutPath/miRquant
 #### Load environmental variables
 From here down, you should be able to copy and paste commands.
 ```
+module clear
+
+answer y at prompt
+
+module load perl/5.12.0
+
 source uncENV.sh
 
 Output should look like this:
