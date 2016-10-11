@@ -164,7 +164,7 @@ For each Sample:
 ```
 $ module load python/2.7.6
 $ cd /proj/seth_lab/users/ONYEN/smRNA_pipeline/scripts
-$ bsub –o map_summ.log python generate_mapping_info.py 	path_to/MY_PROJECT_NAME/*/*.stats
+$ python generate_mapping_info.py path/to/MY_PROJECT_NAME/
 ```
 Output:
 MappingInfoTable.tsv		-	Mapping summary for all samples
@@ -175,34 +175,39 @@ We shoot for short reads around 10%, Trimmed reads around 85%, mapped at 70-80%,
 ```
 $ cd /proj/seth_lab/users/ONYEN/smRNA_pipeline/scripts
 $ module load r
-$ bsub –o lenDist.log python lenDist.py /proj/seth_lab/projects/smallRNA/MY_PROJECT_NAME/*/IntermediateFiles/*O10_E1.fq --image
+$ bsub python lenDist.py /proj/seth_lab/projects/smallRNA/MY_PROJECT_NAME/ --image
 ```
 Output:
-lenDist.tsv			- length distribution for the fastq, should see a bump at ~22 for 
+length_distribution.csv	- length distribution for the fastq, should see a bump at ~22 for 
 				  miRNAs, and maybe a bump around 30 for tRNAs
-lenDistHistogram.png	- optional, length distribution image, output if --image flag included
+length_distribution.png	- optional, length distribution image, output if --image flag included
 
 ####To generate normalized expression (RPMM) across multiple samples:
 ```
 $ cd /proj/seth_lab/users/ONYEN/smRNA_pipeline/scripts
-$ bsub –o RPMM.log python genNormalRPM.py spec /proj/seth_lab/projects/smallRNA/MY_PROJECT_NAME/*/TAB_lenDist_summary.txt
+$ bsub python genNormalRPM.py -sp spec /proj/seth_lab/projects/smallRNA/MY_PROJECT_NAME/
 ```
 Outputs:
-RPM_all.tsv			-	RPM for everything
-RPM_miRs_only.tsv		-	RPM for miRs
+RPM_all.tsv		-	RPM for everything
 RPM_mirRs_over_100.tsv	-	RPM for miRs if the RPM for the miR was over 100 for at
 					least sample
 
 ####To generate normalized expression (RPMMMM) across multiple samples:
 ```
 $ cd /proj/seth_lab/users/ONYEN/smRNA_pipeline/scripts
-$ bsub –o RPMMM.log python genNormalRPMMM.py spec /proj/seth_lab/projects/smallRNA/MY_PROJECT_NAME/*/TAB_3p_summary_mir.txt
+$ bsub –o RPMMM.log python genNormalRPMMM.py -sp spec /proj/seth_lab/projects/smallRNA/MY_PROJECT_NAME/
 ```
 Outputs:
-RPMMM.csv			-	RPMMM for everything
+RPMMM.csv		-	RPMMM for everything
 
 ####To generate sample correlations:
 Correlation between samples in the miRs over 100 output.  This should be possible to do in excel.  I have included the R script I use, which requires variables to be switched within and is run on my local machine.  The R script is smRNAseq_correlation.R
+
+*NOTE: This requires at least two samples, since it is looking for correlation between samples
+
+```
+$ Rscript sample_correlation.R RPMM_mirs_over_100.csv
+```
 
 Output from R script:
 sample_correlation_values.tsv	-	Table of correlations between samples
