@@ -1,4 +1,9 @@
-# THIS CODE IS NO LONGER SUPPORTED, USE THE PYTHON VERSION OF MIRQUANT
+# WARNING
+
+## This code is no longer supported
+## Use the python version of miRquant  
+
+  
 
 
 
